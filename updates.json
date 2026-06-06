@@ -1,0 +1,19 @@
+{
+  "addons": {
+    "zotero-obsidian-linker@qiansiyuan.local": {
+      "updates": [
+        {
+          "version": "0.2.4",
+          "update_link": "https://github.com/SiriYep/zotero-obsidian-linker/releases/download/v0.2.4/zotero-obsidian-linker-0.2.4.xpi",
+          "update_hash": "sha256:4d34dbd3f491e0db5cf607c323e3ffa42f3066206b8eeae6efb61b4e16cbd6bd",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "6.999",
+              "strict_max_version": "10.*"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
