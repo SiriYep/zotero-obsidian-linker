@@ -1,0 +1,59 @@
+<vbox
+  id="zotero-obsidian-linker-preferences"
+  class="main-section"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  onload="Zotero.ObsidianLinker.onPrefsLoad(event)"
+>
+  <groupbox aria-labelledby="zotero-obsidian-linker-settings-title">
+    <label><html:h2 id="zotero-obsidian-linker-settings-title">Settings</html:h2></label>
+
+    <hbox align="center">
+      <label value="Note directory" control="zotero-obsidian-linker-note-dir"/>
+      <html:input
+        id="zotero-obsidian-linker-note-dir"
+        type="text"
+        readonly="true"
+        preference="extensions.zotero.obsidianLinker.noteDir"
+        class="directory-path"
+        style="flex: 1;"
+      />
+      <button
+        id="zotero-obsidian-linker-choose-note-dir"
+        label="Choose..."
+        oncommand="Zotero.ObsidianLinker.chooseNoteDirFromPrefs(window)"
+      />
+    </hbox>
+
+    <hbox align="center">
+      <label value="Filename template" control="zotero-obsidian-linker-file-name-template"/>
+      <html:input
+        id="zotero-obsidian-linker-file-name-template"
+        type="text"
+        preference="extensions.zotero.obsidianLinker.fileNameTemplate"
+        style="flex: 1;"
+      />
+    </hbox>
+
+    <description>
+      Supported variables: {{citekey}}, {{title}}, {{year}}, {{firstAuthor}}, {{itemKey}}
+    </description>
+
+    <separator class="thin"/>
+
+    <checkbox
+      id="zotero-obsidian-linker-show-success-alert"
+      label="Show completion confirmation"
+      native="true"
+      preference="extensions.zotero.obsidianLinker.showSuccessAlert"
+    />
+
+    <checkbox
+      id="zotero-obsidian-linker-trust-obsidian-links"
+      label="Trust obsidian:// links in Zotero"
+      native="true"
+      preference="extensions.zotero.obsidianLinker.trustObsidianLinks"
+      oncommand="Zotero.ObsidianLinker.onTrustObsidianLinksChanged(window)"
+    />
+  </groupbox>
+</vbox>
