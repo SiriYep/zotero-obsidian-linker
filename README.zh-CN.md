@@ -15,6 +15,7 @@ Obsidian Markdown 论文笔记。它会把 Zotero 条目、论文 PDF 和 Obsidi
 - 支持用可配置模板生成笔记文件名。
 - 支持在设置页批量规范化已有插件笔记的文件名。
 - 可选减少 Zotero 打开 `obsidian://` 链接时的外部协议确认提示。
+- 附带一个 [Claude Code skill](skills/README.zh-CN.md)（`read-paper`），可对论文做 AI 精读并把结构化分析写回生成的笔记。
 
 ## 兼容性
 
@@ -150,6 +151,25 @@ obsidian_uri: ...
 ```
 
 更新已有笔记时，插件会替换 frontmatter 和受管理的链接块，并保留其余正文内容。
+
+## AI 论文精读（Claude Code Skill）
+
+本插件生成的笔记可以直接配合仓库附带的 [`read-paper`](skills/README.zh-CN.md) skill 在
+[Claude Code](https://claude.com/claude-code) 中使用。安装后，对 Claude 说
+`/read-paper <论文名>`，它会：
+
+- 定位文献笔记，并通过上面展示的 `zotero_pdf_key` frontmatter 解析出本地 PDF；
+- 分块读完 PDF，把结构化精读分析写回笔记的 `## Notes` 区——速览、核心贡献、
+  逐框拆解方法图（从 PDF 裁出架构图并嵌入笔记）、实验、批判性评价，以及
+  "为什么这么设计、为什么不那样做"式的核心机制深挖；
+- 所有生成内容都包在 `<!-- ai-read-paper -->` 标记内，重跑原地更新，
+  **绝不覆盖手写笔记**；
+- 还可以用 `/read-paper consolidate` 把精读后的追问讨论提炼回同一篇笔记。
+
+该 skill 采用开放的 [Agent Skills](https://agentskills.io) 格式，除 Claude Code
+外，也可以装进 OpenAI Codex CLI 等兼容此格式的 agent。
+
+依赖、安装与用法详见 [skills/README.zh-CN.md](skills/README.zh-CN.md)。
 
 ## Obsidian 链接
 
