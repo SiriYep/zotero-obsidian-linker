@@ -36,8 +36,19 @@
     </hbox>
 
     <description>
-      Supported variables: {{citekey}}, {{title}}, {{year}}, {{firstAuthor}}, {{itemKey}}
+      Supported variables: {{paperDate}}, {{noteDate}}, {{shortTitle3}}, {{citekey}}, {{title}}, {{year}}, {{firstAuthor}}, {{itemKey}}
     </description>
+
+    <hbox align="center">
+      <button
+        id="zotero-obsidian-linker-normalize-file-names"
+        label="Normalize filenames..."
+        oncommand="Zotero.ObsidianLinker.normalizeNoteFileNamesFromPrefs(window)"
+      />
+      <description>
+        Rename plugin-managed Markdown notes in the note directory using the current template.
+      </description>
+    </hbox>
 
     <separator class="thin"/>
 

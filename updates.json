@@ -3,9 +3,9 @@
     "zotero-obsidian-linker@qiansiyuan.local": {
       "updates": [
         {
-          "version": "0.2.4",
-          "update_link": "https://github.com/SiriYep/zotero-obsidian-linker/releases/download/v0.2.4/zotero-obsidian-linker-0.2.4.xpi",
-          "update_hash": "sha256:4d34dbd3f491e0db5cf607c323e3ffa42f3066206b8eeae6efb61b4e16cbd6bd",
+          "version": "0.2.7",
+          "update_link": "https://github.com/SiriYep/zotero-obsidian-linker/releases/download/v0.2.7/zotero-obsidian-linker-0.2.7.xpi",
+          "update_hash": "sha256:6f29566c9a82ee11342da94619638c5d71bc7501e2000008b95a88cb421f6c01",
           "applications": {
             "zotero": {
               "strict_min_version": "6.999",
