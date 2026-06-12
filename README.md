@@ -1,6 +1,6 @@
 # Zotero Obsidian Linker
 
-English | [Simplified Chinese](README.zh-CN.md)
+English | [简体中文](README.zh-CN.md)
 
 Zotero Obsidian Linker is a Zotero plugin that creates and maintains Obsidian
 Markdown notes for Zotero items. It keeps the Zotero item, the paper PDF, and
