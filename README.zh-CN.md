@@ -11,10 +11,12 @@ Obsidian Markdown 论文笔记。它会把 Zotero 条目、论文 PDF 和 Obsidi
 - 可以从 Zotero 条目或该条目下的 PDF 附件触发创建。
 - 在 Zotero 父条目下添加一个 `Obsidian Note` URL 附件。
 - 在生成的 Markdown 笔记中写入 Zotero 条目链接和 PDF 链接。
+- 配置 vault 根目录和 vault 名称后，使用 vault 内相对路径生成 Obsidian 链接。
 - 更新已有笔记时保留正文，只刷新元数据和插件管理的链接。
 - 支持用可配置模板生成笔记文件名。
 - 支持在设置页批量规范化已有插件笔记的文件名。
 - 可选减少 Zotero 打开 `obsidian://` 链接时的外部协议确认提示。
+- 根据 Zotero 界面语言显示英文或简体中文 UI。
 - 附带一个 [Claude Code skill](skills/README.zh-CN.md)（`read-paper`），可对论文做 AI 精读并把结构化分析写回生成的笔记。
 
 ## 兼容性
@@ -44,7 +46,7 @@ Obsidian Markdown 论文笔记。它会把 Zotero 条目、论文 PDF 和 Obsidi
 生成的插件包会写入 `dist/`，例如：
 
 ```text
-dist/zotero-obsidian-linker-0.2.7.xpi
+dist/zotero-obsidian-linker-0.2.8.xpi
 ```
 
 然后在 Zotero 插件管理器中安装这个文件。
@@ -64,6 +66,9 @@ dist/zotero-obsidian-linker-0.2.7.xpi
 可用设置：
 
 - `Note directory`：Markdown 笔记创建位置。
+- `Vault root`：包含笔记目录的 Obsidian vault 根目录。
+- `Vault name`：写入 `obsidian://open?vault=...` 链接的 Obsidian vault
+  名称。选择 vault 根目录后如果不手动填写，插件会默认使用根目录文件夹名。
 - `Filename template`：用于生成笔记文件名的模板。
 - `Show completion confirmation`：创建或更新完成后显示确认弹窗。
 - `Trust obsidian:// links in Zotero`：减少 Zotero 打开 Obsidian 链接时的外部协议提示。
@@ -111,13 +116,10 @@ dist/zotero-obsidian-linker-0.2.7.xpi
 - 保留笔记正文；
 - 重写插件管理的 frontmatter 和 Zotero 链接块；
 - 更新 Zotero 条目下的 `Obsidian Note` URL 附件；
+- 在条件满足时，把 `obsidian_uri` 刷新成当前的 vault-relative 链接格式；
 - 如果目标文件名冲突，会追加 Zotero item key，避免覆盖已有文件。
 
-批量运行结束后，Zotero 会显示汇总结果。详细日志会写入：
-
-```text
-/tmp/zotero-obsidian-linker-batch-rename.log
-```
+批量运行结束后，Zotero 会显示汇总结果。详细日志会写入系统临时目录，弹窗里会显示具体日志路径。
 
 ## 生成的笔记
 
@@ -132,6 +134,7 @@ authors:
 year: ...
 paper_date: ...
 note_date: ...
+note_path: ...
 doi: ...
 url: ...
 zotero_item: ...
@@ -146,7 +149,7 @@ obsidian_uri: ...
 
 ```markdown
 <!-- zotero-obsidian-linker -->
-[Zotero 条目](...) | [原文 PDF](...)
+[Zotero Item](...) | [PDF](...)
 <!-- /zotero-obsidian-linker -->
 ```
 
@@ -173,7 +176,25 @@ obsidian_uri: ...
 
 ## Obsidian 链接
 
-生成的笔记使用 `obsidian://open?path=...` 链接，让 Zotero 能够打开对应的 Obsidian Markdown 文件。
+生成的笔记会优先使用 vault-relative Obsidian 链接：
+
+```text
+obsidian://open?vault=<vault-name>&file=<path-inside-vault>
+```
+
+例如 vault 根目录是 `Research`，笔记目录是 `Research/Paper Reading`，笔记文件是
+`260600-DemystifingVideoReasoning-Wang.md`，生成的链接会指向：
+
+```text
+obsidian://open?vault=Research&file=Paper%20Reading%2F260600-DemystifingVideoReasoning-Wang.md
+```
+
+这个模式类似 Zotero 链接：Zotero 用 item key 定位 PDF，而不是直接保存本机 PDF 路径；
+Obsidian 这边则用 vault 名称和 vault 内相对路径定位笔记。换设备后，只要 Obsidian 里有同名
+vault，且笔记在 vault 内的相对路径一致，这个链接就可以继续打开。
+
+如果没有配置 `Vault root`，或者笔记目录不在配置的 vault 根目录下面，插件会回退到绝对路径形式：
+`obsidian://open?path=...`。
 
 Zotero 可能会在打开外部协议链接时弹出确认提示。启用 `Trust obsidian:// links in Zotero` 后，插件会调整 Zotero 的协议偏好设置，以减少这类提示。这个设置只影响 Zotero 对
 `obsidian://` 链接的处理。
@@ -200,7 +221,11 @@ UPDATE_LINK=file:///absolute/path/to/plugin.xpi ./build.sh
 
 ## 隐私
 
-插件会把设置中的笔记目录保存在本机 Zotero preferences 中。生成的笔记会包含 Zotero 条目链接、PDF 链接和 Obsidian 文件 URI，这样两个应用才能互相打开对应内容。
+插件会把设置中的笔记目录、vault 根目录和 vault 名称保存在本机 Zotero preferences 中。生成的笔记会包含 Zotero 条目链接、PDF 链接和 Obsidian URI，这样两个应用才能互相打开对应内容。
+
+如果可以生成 vault-relative 链接，笔记里只会保存 vault 内相对 `note_path` 和
+`obsidian://open?vault=...&file=...` URI，不需要写入本机绝对 vault 路径。如果插件回退到
+`obsidian://open?path=...`，生成的笔记则必然会包含对应的本机绝对文件路径。
 
 仓库和打包后的插件不需要包含用户本地 Obsidian vault 路径。
 

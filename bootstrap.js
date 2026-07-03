@@ -65,11 +65,64 @@ const TITLE_STOP_WORDS = new Set([
   "with"
 ]);
 const TITLE_CONNECTOR_WORDS = new Set(["and", "in", "of", "on", "or", "to"]);
-const PLUGIN_VERSION = "0.2.7";
+const PLUGIN_VERSION = "0.2.8";
+const FALLBACK_LOCALE_STRINGS = {
+  "en-US": {
+    "zotero-obsidian-linker-pref-title": "Obsidian Linker",
+    "zotero-obsidian-linker-create-note": "Create/Update Item Obsidian Note",
+    "zotero-obsidian-linker-configure": "Obsidian Linker: Configure...",
+    "zotero-obsidian-linker-alert-title": "Zotero Obsidian Linker",
+    "zotero-obsidian-linker-no-item-selected": "Select a Zotero item, or a PDF attachment under an item.",
+    "zotero-obsidian-linker-create-failed": "Failed to create Obsidian note:\n{ $error }",
+    "zotero-obsidian-linker-choose-note-dir-title": "Choose Obsidian note directory",
+    "zotero-obsidian-linker-choose-vault-root-title": "Choose Obsidian vault root",
+    "zotero-obsidian-linker-markdown-template-prompt": "Markdown filename template:",
+    "zotero-obsidian-linker-config-saved": "Configuration saved.\n\nDirectory: { $directory }\nTemplate: { $template }",
+    "zotero-obsidian-linker-choose-note-dir-failed": "Failed to choose Obsidian note directory:\n{ $error }",
+    "zotero-obsidian-linker-choose-vault-root-failed": "Failed to choose Obsidian vault root:\n{ $error }",
+    "zotero-obsidian-linker-note-dir-required": "Please choose an Obsidian note directory first.",
+    "zotero-obsidian-linker-normalize-confirm": "Scan the note directory and rename plugin-managed Markdown notes using the current filename template?",
+    "zotero-obsidian-linker-normalize-summary": "Scanned: { $scanned }\nManaged notes: { $managed }\nRenamed: { $renamed }\nUpdated: { $updated }\nUnchanged: { $unchanged }\nSkipped: { $skipped }\nConflicts avoided: { $conflicts }\nErrors: { $errors }\n\nDetails were written to { $logPath }",
+    "zotero-obsidian-linker-normalize-failed": "Failed to normalize filenames:\n{ $error }",
+    "zotero-obsidian-linker-status-created": "created",
+    "zotero-obsidian-linker-status-updated": "updated",
+    "zotero-obsidian-linker-status-renamed": "renamed",
+    "zotero-obsidian-linker-link-zotero-item": "Zotero Item",
+    "zotero-obsidian-linker-link-pdf": "PDF",
+    "zotero-obsidian-linker-note-dir-missing": "Note directory does not exist: { $directory }",
+    "zotero-obsidian-linker-filename-unavailable": "Could not find available filename for { $path }"
+  },
+  "zh-CN": {
+    "zotero-obsidian-linker-pref-title": "Obsidian Linker",
+    "zotero-obsidian-linker-create-note": "为条目新建/更新 Obsidian 笔记",
+    "zotero-obsidian-linker-configure": "Obsidian Linker：配置...",
+    "zotero-obsidian-linker-alert-title": "Zotero Obsidian Linker",
+    "zotero-obsidian-linker-no-item-selected": "请选择一个 Zotero 条目，或者这个条目下面的 PDF 附件。",
+    "zotero-obsidian-linker-create-failed": "创建 Obsidian 笔记失败：\n{ $error }",
+    "zotero-obsidian-linker-choose-note-dir-title": "选择 Obsidian 笔记目录",
+    "zotero-obsidian-linker-choose-vault-root-title": "选择 Obsidian vault 根目录",
+    "zotero-obsidian-linker-markdown-template-prompt": "Markdown 文件名模板：",
+    "zotero-obsidian-linker-config-saved": "配置已保存。\n\n目录：{ $directory }\n模板：{ $template }",
+    "zotero-obsidian-linker-choose-note-dir-failed": "选择 Obsidian 笔记目录失败：\n{ $error }",
+    "zotero-obsidian-linker-choose-vault-root-failed": "选择 Obsidian vault 根目录失败：\n{ $error }",
+    "zotero-obsidian-linker-note-dir-required": "请先选择 Obsidian 笔记目录。",
+    "zotero-obsidian-linker-normalize-confirm": "扫描笔记目录，并使用当前文件名模板重命名插件管理的 Markdown 笔记？",
+    "zotero-obsidian-linker-normalize-summary": "扫描文件数：{ $scanned }\n插件管理的笔记：{ $managed }\n已重命名：{ $renamed }\n已更新：{ $updated }\n未变化：{ $unchanged }\n已跳过：{ $skipped }\n已避免冲突：{ $conflicts }\n错误：{ $errors }\n\n详细日志已写入 { $logPath }",
+    "zotero-obsidian-linker-normalize-failed": "批量规范化文件名失败：\n{ $error }",
+    "zotero-obsidian-linker-status-created": "已创建",
+    "zotero-obsidian-linker-status-updated": "已更新",
+    "zotero-obsidian-linker-status-renamed": "已重命名",
+    "zotero-obsidian-linker-link-zotero-item": "Zotero Item",
+    "zotero-obsidian-linker-link-pdf": "PDF",
+    "zotero-obsidian-linker-note-dir-missing": "笔记目录不存在：{ $directory }",
+    "zotero-obsidian-linker-filename-unavailable": "无法为 { $path } 找到可用文件名"
+  }
+};
 
 var ObsidianLinker = {
   _windows: new Set(),
   _preferencePaneID: null,
+  _localization: null,
 
   async startup() {
     await Promise.all([
@@ -126,7 +179,7 @@ var ObsidianLinker = {
           menuType: "menuitem",
           l10nID: "zotero-obsidian-linker-create-note",
           onShown: (_event, context) => {
-            this.setMenuLabel(context, "为条目新建/更新 Obsidian 笔记");
+            this.setMenuLabel(context, this.getString("zotero-obsidian-linker-create-note"));
           },
           onCommand: (event, context) => {
             const win = event.target.ownerGlobal || Zotero.getMainWindow();
@@ -147,7 +200,7 @@ var ObsidianLinker = {
           l10nID: "zotero-obsidian-linker-configure",
           enableForTabTypes: ["library"],
           onShown: (_event, context) => {
-            this.setMenuLabel(context, "Obsidian Linker：配置...");
+            this.setMenuLabel(context, this.getString("zotero-obsidian-linker-configure"));
           },
           onCommand: (event) => {
             void this.configure(event.target.ownerGlobal);
@@ -194,6 +247,97 @@ var ObsidianLinker = {
     }
   },
 
+  getLocalization() {
+    if (this._localization) {
+      return this._localization;
+    }
+
+    let LocalizationClass = null;
+    try {
+      if (typeof Localization !== "undefined") {
+        LocalizationClass = Localization;
+      }
+    }
+    catch (_error) {
+      LocalizationClass = null;
+    }
+
+    if (!LocalizationClass) {
+      try {
+        const imported = ChromeUtils.importESModule("resource://gre/modules/Localization.sys.mjs");
+        LocalizationClass = imported.Localization;
+      }
+      catch (_error) {
+        LocalizationClass = null;
+      }
+    }
+
+    if (!LocalizationClass) {
+      return null;
+    }
+
+    try {
+      this._localization = new LocalizationClass(["zotero-obsidian-linker.ftl"], true);
+      return this._localization;
+    }
+    catch (error) {
+      Zotero.logError(error);
+      this.log(`localization init failed: ${error && error.message ? error.message : error}`);
+      return null;
+    }
+  },
+
+  getString(id, args = {}) {
+    try {
+      const localization = this.getLocalization();
+      if (localization && localization.formatMessagesSync) {
+        const message = localization.formatMessagesSync([{ id, args }])[0];
+        if (message && message.value) {
+          return message.value;
+        }
+      }
+    }
+    catch (error) {
+      Zotero.logError(error);
+      this.log(`localization format failed for ${id}: ${error && error.message ? error.message : error}`);
+    }
+
+    return this.getFallbackString(id, args);
+  },
+
+  getFallbackString(id, args = {}) {
+    const locale = this.getCurrentLocale();
+    const branch = locale.toLowerCase().startsWith("zh") ? "zh-CN" : "en-US";
+    const strings = FALLBACK_LOCALE_STRINGS[branch] || FALLBACK_LOCALE_STRINGS["en-US"];
+    const fallback = FALLBACK_LOCALE_STRINGS["en-US"][id] || id;
+    const template = strings[id] || fallback;
+    return template.replace(/\{\s*\$([A-Za-z0-9_]+)\s*\}/g, (match, key) => {
+      return Object.prototype.hasOwnProperty.call(args, key) ? String(args[key]) : match;
+    });
+  },
+
+  getCurrentLocale() {
+    try {
+      if (Zotero && Zotero.locale) {
+        return Zotero.locale;
+      }
+    }
+    catch (_error) {
+      // Fall through to Services.locale.
+    }
+
+    try {
+      if (Services.locale && Services.locale.appLocaleAsBCP47) {
+        return Services.locale.appLocaleAsBCP47;
+      }
+    }
+    catch (_error) {
+      // Fall through to English.
+    }
+
+    return "en-US";
+  },
+
   unregisterMenus() {
     if (!Zotero.MenuManager) {
       return;
@@ -220,7 +364,7 @@ var ObsidianLinker = {
         pluginID: ADDON_ID,
         id: "zotero-obsidian-linker-prefpane",
         src: "content/preferences.xhtml",
-        label: "Obsidian Linker",
+        label: this.getString("zotero-obsidian-linker-pref-title"),
         image: "chrome://zotero/skin/20/universal/note.svg"
       });
       this.log(`registered preference pane: ${this._preferencePaneID}`);
@@ -398,7 +542,7 @@ var ObsidianLinker = {
       const sourceItems = contextItems.length ? contextItems : this.getSelectedPaneItems(win);
       items = this.resolveRegularItems(sourceItems);
       if (!items.length) {
-        this.alert(win, "请选择一个 Zotero 条目，或者这个条目下面的 PDF 附件。");
+        this.alert(win, this.getString("zotero-obsidian-linker-no-item-selected"));
         return;
       }
 
@@ -419,7 +563,10 @@ var ObsidianLinker = {
       await this.restoreSelection(win, items);
 
       if (this.getPref("showSuccessAlert", false)) {
-        this.alert(win, results.map(r => `${r.status}: ${r.fileName}`).join("\n"));
+        this.alert(win, results.map(r => {
+          const status = this.getString(`zotero-obsidian-linker-status-${r.status}`);
+          return `${status}: ${r.fileName}`;
+        }).join("\n"));
       }
       else {
         this.log(`completed without alert: ${results.map(r => `${r.status}:${r.fileName}`).join(", ")}`);
@@ -430,7 +577,9 @@ var ObsidianLinker = {
       Zotero.logError(error);
       await this.writeRunMarker(`error ${error && error.message ? error.message : error}`);
       await this.restoreSelection(win, items);
-      this.alert(win, `Failed to create Obsidian note:\n${error.message || error}`);
+      this.alert(win, this.getString("zotero-obsidian-linker-create-failed", {
+        error: error.message || error
+      }));
     }
   },
 
@@ -484,23 +633,27 @@ var ObsidianLinker = {
   async ensureConfig(win) {
     let noteDir = this.getPref("noteDir", "");
     const fileNameTemplate = this.getPref("fileNameTemplate", DEFAULT_FILE_NAME_TEMPLATE) || DEFAULT_FILE_NAME_TEMPLATE;
+    const vaultRoot = this.getPref("vaultRoot", "");
+    const vaultName = this.getPref("vaultName", "");
 
     if (!noteDir) {
-      noteDir = await this.pickFolder(win, "Choose Obsidian note directory");
+      noteDir = await this.pickFolder(win, this.getString("zotero-obsidian-linker-choose-note-dir-title"));
       if (!noteDir) {
         return null;
       }
       this.setPref("noteDir", noteDir);
     }
 
-    return { noteDir, fileNameTemplate };
+    return { noteDir, fileNameTemplate, vaultRoot, vaultName };
   },
 
   async configure(win) {
     const currentDir = this.getPref("noteDir", "");
     const currentTemplate = this.getPref("fileNameTemplate", DEFAULT_FILE_NAME_TEMPLATE) || DEFAULT_FILE_NAME_TEMPLATE;
+    const vaultRoot = this.getPref("vaultRoot", "");
+    const vaultName = this.getPref("vaultName", "");
 
-    const noteDir = await this.pickFolder(win, "Choose Obsidian note directory", currentDir);
+    const noteDir = await this.pickFolder(win, this.getString("zotero-obsidian-linker-choose-note-dir-title"), currentDir);
     if (!noteDir) {
       return null;
     }
@@ -508,8 +661,8 @@ var ObsidianLinker = {
     const templateInput = { value: currentTemplate };
     const templateOK = Services.prompt.prompt(
       win,
-      "Zotero Obsidian Linker",
-      "Markdown filename template:",
+      this.getString("zotero-obsidian-linker-alert-title"),
+      this.getString("zotero-obsidian-linker-markdown-template-prompt"),
       templateInput,
       null,
       {}
@@ -523,12 +676,17 @@ var ObsidianLinker = {
 
     this.alert(
       win,
-      `Configuration saved.\n\nDirectory: ${noteDir}\nTemplate: ${templateInput.value.trim()}`
+      this.getString("zotero-obsidian-linker-config-saved", {
+        directory: noteDir,
+        template: templateInput.value.trim()
+      })
     );
 
     return {
       noteDir,
-      fileNameTemplate: templateInput.value.trim()
+      fileNameTemplate: templateInput.value.trim(),
+      vaultRoot,
+      vaultName
     };
   },
 
@@ -652,6 +810,8 @@ var ObsidianLinker = {
   ensurePrefDefaults() {
     const defaults = {
       noteDir: "",
+      vaultRoot: "",
+      vaultName: "",
       fileNameTemplate: DEFAULT_FILE_NAME_TEMPLATE,
       showSuccessAlert: false,
       trustObsidianLinks: false,
@@ -685,6 +845,7 @@ var ObsidianLinker = {
   onPrefsLoad(event) {
     const win = event.target.ownerDocument.defaultView;
     this.ensurePrefDefaults();
+    this.insertLocalization(win);
     const sync = () => this.syncPrefsWindow(win);
     sync();
     win.setTimeout(sync, 0);
@@ -697,6 +858,8 @@ var ObsidianLinker = {
     }
     const fields = [
       ["zotero-obsidian-linker-note-dir", "noteDir", ""],
+      ["zotero-obsidian-linker-vault-root", "vaultRoot", ""],
+      ["zotero-obsidian-linker-vault-name", "vaultName", ""],
       ["zotero-obsidian-linker-file-name-template", "fileNameTemplate", DEFAULT_FILE_NAME_TEMPLATE]
     ];
     for (const [id, key, fallback] of fields) {
@@ -710,7 +873,7 @@ var ObsidianLinker = {
   async chooseNoteDirFromPrefs(win) {
     try {
       await this.writePreferenceMarker("choose-start");
-      const noteDir = await this.pickFolder(win, "Choose Obsidian note directory", this.getPref("noteDir", ""));
+      const noteDir = await this.pickFolder(win, this.getString("zotero-obsidian-linker-choose-note-dir-title"), this.getPref("noteDir", ""));
       await this.writePreferenceMarker(`choose-result=${noteDir || "cancel"}`);
       if (!noteDir) {
         return;
@@ -721,8 +884,45 @@ var ObsidianLinker = {
     catch (error) {
       Zotero.logError(error);
       await this.writePreferenceMarker(`choose-error=${error && error.message ? error.message : error}`);
-      this.alert(win, `Failed to choose Obsidian note directory:\n${error.message || error}`);
+      this.alert(win, this.getString("zotero-obsidian-linker-choose-note-dir-failed", {
+        error: error.message || error
+      }));
     }
+  },
+
+  async chooseVaultRootFromPrefs(win) {
+    try {
+      await this.writePreferenceMarker("choose-vault-root-start");
+      const currentRoot = this.getPref("vaultRoot", "");
+      const currentNoteDir = this.getPref("noteDir", "");
+      const initialPath = currentRoot || (currentNoteDir ? this.parentDir(currentNoteDir) : "");
+      const vaultRoot = await this.pickFolder(win, this.getString("zotero-obsidian-linker-choose-vault-root-title"), initialPath);
+      await this.writePreferenceMarker(`choose-vault-root-result=${vaultRoot || "cancel"}`);
+      if (!vaultRoot) {
+        return;
+      }
+
+      this.setPref("vaultRoot", vaultRoot);
+      if (!String(this.getPref("vaultName", "") || "").trim()) {
+        this.setPref("vaultName", this.leafName(vaultRoot));
+      }
+      this.syncPrefsWindow(win);
+    }
+    catch (error) {
+      Zotero.logError(error);
+      await this.writePreferenceMarker(`choose-vault-root-error=${error && error.message ? error.message : error}`);
+      this.alert(win, this.getString("zotero-obsidian-linker-choose-vault-root-failed", {
+        error: error.message || error
+      }));
+    }
+  },
+
+  saveTextPrefFromPrefs(win, elementID, prefKey) {
+    const elem = win && win.document ? win.document.getElementById(elementID) : null;
+    if (!elem) {
+      return;
+    }
+    this.setPref(prefKey, String(elem.value || "").trim());
   },
 
   onTrustObsidianLinksChanged(win) {
@@ -738,47 +938,56 @@ var ObsidianLinker = {
       const templateInput = win && win.document
         ? win.document.getElementById("zotero-obsidian-linker-file-name-template")
         : null;
+      const vaultRootInput = win && win.document
+        ? win.document.getElementById("zotero-obsidian-linker-vault-root")
+        : null;
+      const vaultNameInput = win && win.document
+        ? win.document.getElementById("zotero-obsidian-linker-vault-name")
+        : null;
       const noteDir = noteDirInput && noteDirInput.value
         ? noteDirInput.value
         : this.getPref("noteDir", "");
       const fileNameTemplate = templateInput && templateInput.value && templateInput.value.trim()
         ? templateInput.value.trim()
         : this.getPref("fileNameTemplate", DEFAULT_FILE_NAME_TEMPLATE) || DEFAULT_FILE_NAME_TEMPLATE;
+      const vaultRoot = vaultRootInput && vaultRootInput.value
+        ? vaultRootInput.value
+        : this.getPref("vaultRoot", "");
+      const vaultName = vaultNameInput && vaultNameInput.value
+        ? vaultNameInput.value.trim()
+        : this.getPref("vaultName", "");
       if (!noteDir) {
-        this.alert(win, "请先选择 Obsidian note directory。");
+        this.alert(win, this.getString("zotero-obsidian-linker-note-dir-required"));
         return;
       }
+      this.setPref("noteDir", noteDir);
       this.setPref("fileNameTemplate", fileNameTemplate);
+      this.setPref("vaultRoot", vaultRoot);
+      this.setPref("vaultName", vaultName);
 
       const confirmed = Services.prompt.confirm(
         win,
-        "Zotero Obsidian Linker",
-        "Scan the note directory and rename plugin-managed Markdown notes using the current filename template?"
+        this.getString("zotero-obsidian-linker-alert-title"),
+        this.getString("zotero-obsidian-linker-normalize-confirm")
       );
       if (!confirmed) {
         return;
       }
 
-      const result = await this.normalizeNoteFileNames(noteDir, fileNameTemplate);
+      const result = await this.normalizeNoteFileNames(noteDir, fileNameTemplate, { vaultRoot, vaultName });
       this.alert(
         win,
-        [
-          `Scanned: ${result.scanned}`,
-          `Managed notes: ${result.managed}`,
-          `Renamed: ${result.renamed}`,
-          `Updated: ${result.updated}`,
-          `Unchanged: ${result.unchanged}`,
-          `Skipped: ${result.skipped}`,
-          `Conflicts avoided: ${result.conflicts}`,
-          `Errors: ${result.errors}`,
-          "",
-          "Details were written to /tmp/zotero-obsidian-linker-batch-rename.log"
-        ].join("\n")
+        this.getString("zotero-obsidian-linker-normalize-summary", {
+          ...result,
+          logPath: this.getBatchRenameLogPath()
+        })
       );
     }
     catch (error) {
       Zotero.logError(error);
-      this.alert(win, `Failed to normalize filenames:\n${error.message || error}`);
+      this.alert(win, this.getString("zotero-obsidian-linker-normalize-failed", {
+        error: error.message || error
+      }));
     }
   },
 
@@ -810,13 +1019,14 @@ var ObsidianLinker = {
 
   async createOrUpdateNoteForItem(item, config) {
     const metadata = await this.getMetadata(item, config);
-    const existingNotePath = await this.findExistingNotePath(item, config.noteDir);
+    const existingNotePath = await this.findExistingNotePath(item, config);
     metadata.noteDate = await this.resolveNoteDate(existingNotePath);
     const fileName = this.renderFileName(config.fileNameTemplate, metadata);
     const notePath = this.joinPath(config.noteDir, fileName);
 
     metadata.notePath = notePath;
-    metadata.obsidianURI = this.buildObsidianURI(notePath);
+    metadata.noteRelativePath = this.getVaultRelativePath(notePath, config);
+    metadata.obsidianURI = this.buildObsidianURI(notePath, config);
 
     const file = Zotero.File.pathToFile(notePath);
     const exists = file.exists();
@@ -913,7 +1123,13 @@ var ObsidianLinker = {
     return "library";
   },
 
-  async normalizeNoteFileNames(noteDir, fileNameTemplate) {
+  async normalizeNoteFileNames(noteDir, fileNameTemplate, linkConfig = {}) {
+    const config = {
+      noteDir,
+      fileNameTemplate,
+      vaultRoot: linkConfig.vaultRoot || this.getPref("vaultRoot", ""),
+      vaultName: linkConfig.vaultName || this.getPref("vaultName", "")
+    };
     const paths = this.getMarkdownFiles(noteDir);
     const result = {
       scanned: paths.length,
@@ -946,7 +1162,7 @@ var ObsidianLinker = {
           continue;
         }
 
-        const metadata = await this.getMetadata(item, { noteDir, fileNameTemplate });
+        const metadata = await this.getMetadata(item, config);
         metadata.noteDate = note.noteDate || await this.resolveNoteDate(path);
         if (metadata.paperDate === "000000" && note.paperDate) {
           metadata.paperDate = note.paperDate;
@@ -960,7 +1176,8 @@ var ObsidianLinker = {
         }
 
         metadata.notePath = target.path;
-        metadata.obsidianURI = this.buildObsidianURI(target.path);
+        metadata.noteRelativePath = this.getVaultRelativePath(target.path, config);
+        metadata.obsidianURI = this.buildObsidianURI(target.path, config);
         const nextContent = this.updateMarkdown(content, metadata);
         await Zotero.File.putContentsAsync(target.path, nextContent);
         await this.ensureZoteroAttachment(item, metadata.obsidianURI);
@@ -995,7 +1212,9 @@ var ObsidianLinker = {
     const root = Zotero.File.pathToFile(noteDir);
     const paths = [];
     if (!root.exists() || !root.isDirectory()) {
-      throw new Error(`Note directory does not exist: ${noteDir}`);
+      throw new Error(this.getString("zotero-obsidian-linker-note-dir-missing", {
+        directory: noteDir
+      }));
     }
 
     this.collectMarkdownFiles(root, paths);
@@ -1231,10 +1450,13 @@ var ObsidianLinker = {
       }
     }
 
-    throw new Error(`Could not find available filename for ${desiredPath}`);
+    throw new Error(this.getString("zotero-obsidian-linker-filename-unavailable", {
+      path: desiredPath
+    }));
   },
 
-  async findExistingNotePath(item, noteDir) {
+  async findExistingNotePath(item, configOrNoteDir) {
+    const config = this.coerceLinkConfig(configOrNoteDir);
     const attachments = Zotero.Items.get(item.getAttachments(false));
     for (const attachment of attachments) {
       if (
@@ -1244,8 +1466,8 @@ var ObsidianLinker = {
         continue;
       }
 
-      const path = this.extractObsidianPath(attachment.getField("url"), noteDir);
-      if (!path || !this.isPathInsideDir(path, noteDir)) {
+      const path = this.extractObsidianPath(attachment.getField("url"), config);
+      if (!path || !this.isPathInsideDir(path, config.noteDir)) {
         continue;
       }
 
@@ -1262,20 +1484,26 @@ var ObsidianLinker = {
     return "";
   },
 
-  extractObsidianPath(uri, noteDir) {
+  extractObsidianPath(uri, configOrNoteDir) {
     if (!uri || !String(uri).startsWith("obsidian://open?")) {
       return "";
     }
 
+    const config = this.coerceLinkConfig(configOrNoteDir);
     const query = String(uri).split("?").slice(1).join("?");
     const params = this.parseQueryString(query);
     if (params.path) {
-      return params.path;
+      return this.normalizePath(params.path);
     }
 
     if (params.file) {
-      const fileName = params.file.split(/[\\/]/).filter(Boolean).pop();
-      return fileName ? this.joinPath(noteDir, fileName) : "";
+      const relativePath = this.normalizeRelativePath(params.file);
+      if (config.vaultRoot && relativePath) {
+        return this.joinRelativePath(config.vaultRoot, relativePath);
+      }
+
+      const fileName = relativePath.split(/[\\/]/).filter(Boolean).pop();
+      return fileName && config.noteDir ? this.joinPath(config.noteDir, fileName) : "";
     }
 
     return "";
@@ -1498,6 +1726,7 @@ var ObsidianLinker = {
       `year: ${this.yamlString(metadata.year)}`,
       `paper_date: ${this.yamlString(metadata.paperDate)}`,
       `note_date: ${this.yamlString(metadata.noteDate)}`,
+      `note_path: ${this.yamlString(metadata.noteRelativePath)}`,
       `doi: ${this.yamlString(metadata.doi)}`,
       `url: ${this.yamlString(metadata.url)}`,
       `zotero_item: ${this.yamlString(metadata.itemURI)}`,
@@ -1510,9 +1739,9 @@ var ObsidianLinker = {
   },
 
   buildLinkBlock(metadata) {
-    const links = [`[Zotero 条目](${metadata.itemURI})`];
+    const links = [`[${this.getString("zotero-obsidian-linker-link-zotero-item")}](${metadata.itemURI})`];
     if (metadata.pdfURI) {
-      links.push(`[原文 PDF](${metadata.pdfURI})`);
+      links.push(`[${this.getString("zotero-obsidian-linker-link-pdf")}](${metadata.pdfURI})`);
     }
 
     return `${LINK_BLOCK_START}\n${links.join(" | ")}\n${LINK_BLOCK_END}`;
@@ -1568,8 +1797,68 @@ var ObsidianLinker = {
     });
   },
 
-  buildObsidianURI(notePath) {
+  buildObsidianURI(notePath, configOrNoteDir = {}) {
+    const config = this.coerceLinkConfig(configOrNoteDir);
+    const relativePath = this.getVaultRelativePath(notePath, config);
+    const vaultName = this.getVaultName(config);
+    if (relativePath && vaultName) {
+      return `obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(relativePath)}`;
+    }
     return `obsidian://open?path=${encodeURIComponent(notePath)}`;
+  },
+
+  getVaultRelativePath(notePath, configOrNoteDir = {}) {
+    const config = this.coerceLinkConfig(configOrNoteDir);
+    if (!notePath || !config.vaultRoot || !this.isPathInsideDir(notePath, config.vaultRoot)) {
+      return "";
+    }
+
+    const normalizedPath = this.canonicalPath(notePath);
+    const normalizedRoot = this.canonicalPath(config.vaultRoot);
+    return normalizedPath.slice(normalizedRoot.length).replace(/^\/+/, "");
+  },
+
+  getVaultName(configOrNoteDir = {}) {
+    const config = this.coerceLinkConfig(configOrNoteDir);
+    const explicitName = String(config.vaultName || "").trim();
+    if (explicitName) {
+      return explicitName;
+    }
+    return config.vaultRoot ? this.leafName(config.vaultRoot) : "";
+  },
+
+  coerceLinkConfig(configOrNoteDir = {}) {
+    if (typeof configOrNoteDir === "string") {
+      return {
+        noteDir: configOrNoteDir,
+        vaultRoot: this.getPref("vaultRoot", ""),
+        vaultName: this.getPref("vaultName", "")
+      };
+    }
+
+    const config = configOrNoteDir || {};
+    return {
+      noteDir: config.noteDir || "",
+      vaultRoot: config.vaultRoot || this.getPref("vaultRoot", ""),
+      vaultName: config.vaultName || this.getPref("vaultName", "")
+    };
+  },
+
+  normalizeRelativePath(path) {
+    return String(path || "")
+      .replace(/\\/g, "/")
+      .split("/")
+      .filter(part => part && part !== "." && part !== "..")
+      .join("/");
+  },
+
+  joinRelativePath(root, relativePath) {
+    const parts = this.normalizeRelativePath(relativePath).split("/").filter(Boolean);
+    let path = root;
+    for (const part of parts) {
+      path = this.joinPath(path, part);
+    }
+    return path;
   },
 
   joinPath(dir, fileName) {
@@ -1587,6 +1876,11 @@ var ObsidianLinker = {
   fileBaseName(path) {
     const fileName = String(path || "").split(/[\\/]/).pop() || "";
     return fileName.replace(/\.md$/i, "");
+  },
+
+  leafName(path) {
+    const parts = this.canonicalPath(path).split("/").filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : "";
   },
 
   pathSetKey(path) {
@@ -1646,7 +1940,7 @@ var ObsidianLinker = {
   },
 
   alert(win, message) {
-    Services.prompt.alert(win, "Zotero Obsidian Linker", message);
+    Services.prompt.alert(win, this.getString("zotero-obsidian-linker-alert-title"), message);
   },
 
   log(message) {
@@ -1657,6 +1951,7 @@ var ObsidianLinker = {
 
   async writeStartupMarker(event) {
     try {
+      const path = this.getTempLogPath("zotero-obsidian-linker-startup.log");
       const windows = Zotero.getMainWindows ? Zotero.getMainWindows().length : "unknown";
       const text = [
         `event=${event}`,
@@ -1670,7 +1965,7 @@ var ObsidianLinker = {
         `showSuccessAlert=${this.getPref("showSuccessAlert", false)}`,
         `trustObsidianLinks=${this.getPref("trustObsidianLinks", false)}`
       ].join("\n") + "\n";
-      await Zotero.File.putContentsAsync("/tmp/zotero-obsidian-linker-startup.log", text);
+      await Zotero.File.putContentsAsync(path, text);
     }
     catch (error) {
       Zotero.logError(error);
@@ -1679,12 +1974,13 @@ var ObsidianLinker = {
 
   async writePreferenceMarker(message) {
     try {
+      const path = this.getTempLogPath("zotero-obsidian-linker-prefs.log");
       const text = [
         `time=${new Date().toISOString()}`,
         `version=${PLUGIN_VERSION}`,
         String(message)
       ].join("\n") + "\n";
-      await Zotero.File.putContentsAsync("/tmp/zotero-obsidian-linker-prefs.log", text);
+      await Zotero.File.putContentsAsync(path, text);
     }
     catch (error) {
       Zotero.logError(error);
@@ -1693,6 +1989,7 @@ var ObsidianLinker = {
 
   async writeBatchRenameMarker(result) {
     try {
+      const path = this.getBatchRenameLogPath();
       const text = [
         `time=${new Date().toISOString()}`,
         `version=${PLUGIN_VERSION}`,
@@ -1707,7 +2004,7 @@ var ObsidianLinker = {
         "",
         ...result.details
       ].join("\n") + "\n";
-      await Zotero.File.putContentsAsync("/tmp/zotero-obsidian-linker-batch-rename.log", text);
+      await Zotero.File.putContentsAsync(path, text);
     }
     catch (error) {
       Zotero.logError(error);
@@ -1716,7 +2013,7 @@ var ObsidianLinker = {
 
   async writeRunMarker(message) {
     try {
-      const path = "/tmp/zotero-obsidian-linker-run.log";
+      const path = this.getTempLogPath("zotero-obsidian-linker-run.log");
       let previous = "";
       try {
         const file = Zotero.File.pathToFile(path);
@@ -1739,6 +2036,44 @@ var ObsidianLinker = {
     catch (error) {
       Zotero.logError(error);
     }
+  },
+
+  getBatchRenameLogPath() {
+    return this.getTempLogPath("zotero-obsidian-linker-batch-rename.log");
+  },
+
+  getTempLogPath(fileName) {
+    try {
+      if (typeof PathUtils !== "undefined" && PathUtils.join && PathUtils.tempDir) {
+        return PathUtils.join(PathUtils.tempDir, fileName);
+      }
+    }
+    catch (_error) {
+      // Fall through to nsIProperties.
+    }
+
+    try {
+      const dir = Services.dirsvc.get("TmpD", Components.interfaces.nsIFile);
+      dir.append(fileName);
+      return dir.path;
+    }
+    catch (_error) {
+      // Fall through to environment variables.
+    }
+
+    try {
+      const tempDir = Zotero.isWin
+        ? Services.env.get("TEMP") || Services.env.get("TMP")
+        : Services.env.get("TMPDIR") || "/tmp";
+      if (tempDir) {
+        return this.joinPath(tempDir, fileName);
+      }
+    }
+    catch (_error) {
+      // Fall through to Unix-compatible default.
+    }
+
+    return `/tmp/${fileName}`;
   }
 };
 

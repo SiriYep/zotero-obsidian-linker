@@ -5,66 +5,182 @@
   xmlns:html="http://www.w3.org/1999/xhtml"
   onload="Zotero.ObsidianLinker.onPrefsLoad(event)"
 >
+  <linkset>
+    <html:link rel="localization" href="zotero-obsidian-linker.ftl"/>
+  </linkset>
+
+  <html:style><![CDATA[
+    #zotero-obsidian-linker-preferences {
+      max-width: 980px;
+    }
+
+    #zotero-obsidian-linker-preferences groupbox {
+      margin-top: 8px;
+      max-width: 920px;
+    }
+
+    #zotero-obsidian-linker-settings-title {
+      margin: 0 0 22px;
+      font-size: 1.45em;
+      font-weight: 600;
+    }
+
+    .zol-form {
+      margin-top: 4px;
+    }
+
+    .zol-row {
+      margin-bottom: 14px;
+    }
+
+    .zol-label,
+    .zol-label-spacer {
+      width: 150px;
+      min-width: 150px;
+      margin-inline-end: 16px;
+    }
+
+    .zol-label {
+      font-weight: 500;
+    }
+
+    .zol-input {
+      box-sizing: border-box;
+      min-width: 0;
+      width: 0;
+      min-height: 32px;
+      padding-inline: 8px;
+      font: inherit;
+    }
+
+    .zol-path-input {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .zol-button {
+      min-width: 96px;
+      margin-inline-start: 12px;
+    }
+
+    .zol-description {
+      margin: -4px 0 18px 166px;
+      max-width: 760px;
+      color: GrayText;
+      line-height: 1.35;
+    }
+
+    .zol-action-description {
+      margin-top: 8px;
+    }
+
+    .zol-options {
+      margin: 8px 0 0 166px;
+    }
+
+    .zol-checkbox {
+      margin-bottom: 10px;
+    }
+  ]]></html:style>
+
   <groupbox aria-labelledby="zotero-obsidian-linker-settings-title">
-    <label><html:h2 id="zotero-obsidian-linker-settings-title">Settings</html:h2></label>
+    <label><html:h2 id="zotero-obsidian-linker-settings-title" data-l10n-id="zotero-obsidian-linker-settings-title"></html:h2></label>
 
-    <hbox align="center">
-      <label value="Note directory" control="zotero-obsidian-linker-note-dir"/>
-      <html:input
-        id="zotero-obsidian-linker-note-dir"
-        type="text"
-        readonly="true"
-        preference="extensions.zotero.obsidianLinker.noteDir"
-        class="directory-path"
-        style="flex: 1;"
-      />
-      <button
-        id="zotero-obsidian-linker-choose-note-dir"
-        label="Choose..."
-        oncommand="Zotero.ObsidianLinker.chooseNoteDirFromPrefs(window)"
-      />
-    </hbox>
+    <vbox class="zol-form">
+      <hbox class="zol-row" align="center">
+        <label class="zol-label" data-l10n-id="zotero-obsidian-linker-note-dir-label" control="zotero-obsidian-linker-note-dir"/>
+        <html:input
+          id="zotero-obsidian-linker-note-dir"
+          type="text"
+          readonly="true"
+          preference="extensions.zotero.obsidianLinker.noteDir"
+          class="directory-path zol-input zol-path-input"
+          style="flex: 1;"
+        />
+        <button
+          id="zotero-obsidian-linker-choose-note-dir"
+          class="zol-button"
+          data-l10n-id="zotero-obsidian-linker-choose-button"
+          oncommand="Zotero.ObsidianLinker.chooseNoteDirFromPrefs(window)"
+        />
+      </hbox>
 
-    <hbox align="center">
-      <label value="Filename template" control="zotero-obsidian-linker-file-name-template"/>
-      <html:input
-        id="zotero-obsidian-linker-file-name-template"
-        type="text"
-        preference="extensions.zotero.obsidianLinker.fileNameTemplate"
-        style="flex: 1;"
-      />
-    </hbox>
+      <hbox class="zol-row" align="center">
+        <label class="zol-label" data-l10n-id="zotero-obsidian-linker-vault-root-label" control="zotero-obsidian-linker-vault-root"/>
+        <html:input
+          id="zotero-obsidian-linker-vault-root"
+          type="text"
+          readonly="true"
+          preference="extensions.zotero.obsidianLinker.vaultRoot"
+          class="directory-path zol-input zol-path-input"
+          style="flex: 1;"
+        />
+        <button
+          id="zotero-obsidian-linker-choose-vault-root"
+          class="zol-button"
+          data-l10n-id="zotero-obsidian-linker-choose-button"
+          oncommand="Zotero.ObsidianLinker.chooseVaultRootFromPrefs(window)"
+        />
+      </hbox>
 
-    <description>
-      Supported variables: {{paperDate}}, {{noteDate}}, {{shortTitle3}}, {{citekey}}, {{title}}, {{year}}, {{firstAuthor}}, {{itemKey}}
-    </description>
+      <hbox class="zol-row" align="center">
+        <label class="zol-label" data-l10n-id="zotero-obsidian-linker-vault-name-label" control="zotero-obsidian-linker-vault-name"/>
+        <html:input
+          id="zotero-obsidian-linker-vault-name"
+          type="text"
+          preference="extensions.zotero.obsidianLinker.vaultName"
+          class="zol-input"
+          style="flex: 1;"
+          onchange="Zotero.ObsidianLinker.saveTextPrefFromPrefs(window, 'zotero-obsidian-linker-vault-name', 'vaultName')"
+        />
+      </hbox>
 
-    <hbox align="center">
-      <button
-        id="zotero-obsidian-linker-normalize-file-names"
-        label="Normalize filenames..."
-        oncommand="Zotero.ObsidianLinker.normalizeNoteFileNamesFromPrefs(window)"
-      />
-      <description>
-        Rename plugin-managed Markdown notes in the note directory using the current template.
-      </description>
-    </hbox>
+      <description class="zol-description" data-l10n-id="zotero-obsidian-linker-vault-link-description"></description>
+
+      <hbox class="zol-row" align="center">
+        <label class="zol-label" data-l10n-id="zotero-obsidian-linker-file-name-template-label" control="zotero-obsidian-linker-file-name-template"/>
+        <html:input
+          id="zotero-obsidian-linker-file-name-template"
+          type="text"
+          preference="extensions.zotero.obsidianLinker.fileNameTemplate"
+          class="zol-input"
+          style="flex: 1;"
+          onchange="Zotero.ObsidianLinker.saveTextPrefFromPrefs(window, 'zotero-obsidian-linker-file-name-template', 'fileNameTemplate')"
+        />
+      </hbox>
+
+      <description class="zol-description" data-l10n-id="zotero-obsidian-linker-supported-variables"></description>
+
+      <hbox class="zol-row" align="center">
+        <spacer class="zol-label-spacer"/>
+        <button
+          id="zotero-obsidian-linker-normalize-file-names"
+          data-l10n-id="zotero-obsidian-linker-normalize-file-names-button"
+          oncommand="Zotero.ObsidianLinker.normalizeNoteFileNamesFromPrefs(window)"
+        />
+      </hbox>
+      <description class="zol-description zol-action-description" data-l10n-id="zotero-obsidian-linker-normalize-file-names-description"></description>
+    </vbox>
 
     <separator class="thin"/>
 
-    <checkbox
-      id="zotero-obsidian-linker-show-success-alert"
-      label="Show completion confirmation"
-      native="true"
-      preference="extensions.zotero.obsidianLinker.showSuccessAlert"
-    />
+    <vbox class="zol-options">
+      <checkbox
+        id="zotero-obsidian-linker-show-success-alert"
+        class="zol-checkbox"
+        data-l10n-id="zotero-obsidian-linker-show-success-alert"
+        native="true"
+        preference="extensions.zotero.obsidianLinker.showSuccessAlert"
+      />
 
-    <checkbox
-      id="zotero-obsidian-linker-trust-obsidian-links"
-      label="Trust obsidian:// links in Zotero"
-      native="true"
-      preference="extensions.zotero.obsidianLinker.trustObsidianLinks"
-      oncommand="Zotero.ObsidianLinker.onTrustObsidianLinksChanged(window)"
-    />
+      <checkbox
+        id="zotero-obsidian-linker-trust-obsidian-links"
+        class="zol-checkbox"
+        data-l10n-id="zotero-obsidian-linker-trust-obsidian-links"
+        native="true"
+        preference="extensions.zotero.obsidianLinker.trustObsidianLinks"
+        oncommand="Zotero.ObsidianLinker.onTrustObsidianLinksChanged(window)"
+      />
+    </vbox>
   </groupbox>
 </vbox>

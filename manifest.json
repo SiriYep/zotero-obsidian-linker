@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zotero Obsidian Linker",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Create Obsidian literature notes from Zotero items and add bidirectional links.",
   "author": "qiansiyuan",
   "homepage_url": "https://github.com/SiriYep/zotero-obsidian-linker",

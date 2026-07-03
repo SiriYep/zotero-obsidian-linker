@@ -12,10 +12,13 @@ the Obsidian note connected with bidirectional links.
 - Trigger note creation from either a Zotero item or one of its PDF attachments.
 - Add an `Obsidian Note` URL attachment under the Zotero parent item.
 - Insert Zotero item and PDF links into the generated Markdown note.
+- Use vault-relative Obsidian links when a vault root and vault name are configured.
 - Preserve existing note content while refreshing metadata and managed links.
 - Generate note filenames from a configurable template.
 - Batch-normalize existing plugin-managed note filenames from the settings page.
 - Optionally reduce Zotero confirmation prompts for `obsidian://` links.
+- Show English or Simplified Chinese UI text based on the Zotero interface
+  language.
 - Ship a companion [Claude Code skill](skills/README.md) (`read-paper`) that
   deep-reads papers and writes structured analyses back into the generated
   notes.
@@ -48,7 +51,7 @@ be incompatible, see [Troubleshooting](#troubleshooting).
 The generated package is written to `dist/`, for example:
 
 ```text
-dist/zotero-obsidian-linker-0.2.7.xpi
+dist/zotero-obsidian-linker-0.2.8.xpi
 ```
 
 Install that file through Zotero's plugin manager.
@@ -69,6 +72,11 @@ Open `Settings -> Obsidian Linker` in Zotero.
 Available settings:
 
 - `Note directory`: the folder where Markdown notes are created.
+- `Vault root`: the root folder of the Obsidian vault that contains the note
+  directory.
+- `Vault name`: the Obsidian vault name used in `obsidian://open?vault=...`
+  links. If you leave it empty after choosing a vault root, the plugin uses the
+  vault root folder name.
 - `Filename template`: the template used to generate note filenames.
 - `Show completion confirmation`: show a completion popup after note creation.
 - `Trust obsidian:// links in Zotero`: reduce external-protocol prompts for
@@ -120,13 +128,12 @@ The batch normalizer:
 - preserves the note body;
 - rewrites the managed frontmatter and Zotero link block;
 - updates the Zotero `Obsidian Note` URL attachment;
+- refreshes `obsidian_uri` to the current vault-relative link format when
+  possible;
 - avoids overwriting existing files by adding an item-key suffix on conflicts.
 
-After a batch run, a summary is shown in Zotero. Details are written to:
-
-```text
-/tmp/zotero-obsidian-linker-batch-rename.log
-```
+After a batch run, a summary is shown in Zotero. Details are written to the
+system temporary directory, and the exact log path is shown in the summary.
 
 ## Generated Notes
 
@@ -141,6 +148,7 @@ authors:
 year: ...
 paper_date: ...
 note_date: ...
+note_path: ...
 doi: ...
 url: ...
 zotero_item: ...
@@ -190,8 +198,27 @@ usage details.
 
 ## Obsidian Links
 
-Generated notes use `obsidian://open?path=...` links so that Zotero can open the
-corresponding Markdown file in Obsidian.
+Generated notes prefer vault-relative Obsidian links:
+
+```text
+obsidian://open?vault=<vault-name>&file=<path-inside-vault>
+```
+
+For example, if the vault root is `Research`, the note directory is
+`Research/Paper Reading`, and the note is
+`260600-DemystifingVideoReasoning-Wang.md`, the generated link points to:
+
+```text
+obsidian://open?vault=Research&file=Paper%20Reading%2F260600-DemystifingVideoReasoning-Wang.md
+```
+
+This mirrors the way Zotero links use Zotero item keys instead of local PDF
+paths: another device can open the same note as long as Obsidian has a vault
+with the same name and the note has the same path inside that vault.
+
+If `Vault root` is empty, or the note directory is not inside the configured
+vault root, the plugin falls back to an absolute `obsidian://open?path=...`
+link.
 
 Zotero may ask for confirmation before opening external protocol links. Enabling
 `Trust obsidian:// links in Zotero` sets Zotero protocol preferences to reduce
@@ -219,9 +246,16 @@ UPDATE_LINK=file:///absolute/path/to/plugin.xpi ./build.sh
 
 ## Privacy
 
-The plugin stores the configured note directory in Zotero preferences on the
-local machine. Generated notes contain Zotero item links, PDF links, and an
-Obsidian file URI so that the two applications can open each other.
+The plugin stores the configured note directory, vault root, and vault name in
+Zotero preferences on the local machine. Generated notes contain Zotero item
+links, PDF links, and an Obsidian URI so that the two applications can open each
+other.
+
+When vault-relative links are available, generated notes store only the
+vault-relative `note_path` and `obsidian://open?vault=...&file=...` URI. They do
+not need to contain the local absolute vault path. If the plugin falls back to
+`obsidian://open?path=...`, the generated note necessarily contains that
+absolute local file path.
 
 The repository and packaged plugin do not need to contain a user's local
 Obsidian vault path.
