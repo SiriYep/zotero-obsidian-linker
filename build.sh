@@ -17,6 +17,7 @@ zip -r "$OUT" \
   manifest.json \
   bootstrap.js \
   prefs.js \
+  icons \
   content \
   defaults \
   locale \

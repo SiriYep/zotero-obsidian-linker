@@ -2,7 +2,7 @@ zotero-obsidian-linker-pref-title = Obsidian Linker
 zotero-obsidian-linker-alert-title = Zotero Obsidian Linker
 
 zotero-obsidian-linker-create-note = 为条目新建/更新 Obsidian 笔记
-zotero-obsidian-linker-configure = Obsidian Linker：配置...
+zotero-obsidian-linker-open-settings = 打开 Obsidian Linker 设置
 
 zotero-obsidian-linker-settings-title = 设置
 zotero-obsidian-linker-note-dir-label =
@@ -30,10 +30,6 @@ zotero-obsidian-linker-create-failed = 创建 Obsidian 笔记失败：
     { $error }
 zotero-obsidian-linker-choose-note-dir-title = 选择 Obsidian 笔记目录
 zotero-obsidian-linker-choose-vault-root-title = 选择 Obsidian vault 根目录
-zotero-obsidian-linker-markdown-template-prompt = Markdown 文件名模板：
-zotero-obsidian-linker-config-saved = 配置已保存。
-    目录：{ $directory }
-    模板：{ $template }
 zotero-obsidian-linker-choose-note-dir-failed = 选择 Obsidian 笔记目录失败：
     { $error }
 zotero-obsidian-linker-choose-vault-root-failed = 选择 Obsidian vault 根目录失败：

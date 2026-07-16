@@ -51,7 +51,7 @@ be incompatible, see [Troubleshooting](#troubleshooting).
 The generated package is written to `dist/`, for example:
 
 ```text
-dist/zotero-obsidian-linker-0.2.8.xpi
+dist/zotero-obsidian-linker-0.2.9.xpi
 ```
 
 Install that file through Zotero's plugin manager.

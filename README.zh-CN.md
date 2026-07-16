@@ -46,7 +46,7 @@ Obsidian Markdown 论文笔记。它会把 Zotero 条目、论文 PDF 和 Obsidi
 生成的插件包会写入 `dist/`，例如：
 
 ```text
-dist/zotero-obsidian-linker-0.2.8.xpi
+dist/zotero-obsidian-linker-0.2.9.xpi
 ```
 
 然后在 Zotero 插件管理器中安装这个文件。

@@ -65,19 +65,17 @@ const TITLE_STOP_WORDS = new Set([
   "with"
 ]);
 const TITLE_CONNECTOR_WORDS = new Set(["and", "in", "of", "on", "or", "to"]);
-const PLUGIN_VERSION = "0.2.8";
+const PLUGIN_VERSION = "0.2.9";
 const FALLBACK_LOCALE_STRINGS = {
   "en-US": {
     "zotero-obsidian-linker-pref-title": "Obsidian Linker",
     "zotero-obsidian-linker-create-note": "Create/Update Item Obsidian Note",
-    "zotero-obsidian-linker-configure": "Obsidian Linker: Configure...",
+    "zotero-obsidian-linker-open-settings": "Open Obsidian Linker Settings",
     "zotero-obsidian-linker-alert-title": "Zotero Obsidian Linker",
     "zotero-obsidian-linker-no-item-selected": "Select a Zotero item, or a PDF attachment under an item.",
     "zotero-obsidian-linker-create-failed": "Failed to create Obsidian note:\n{ $error }",
     "zotero-obsidian-linker-choose-note-dir-title": "Choose Obsidian note directory",
     "zotero-obsidian-linker-choose-vault-root-title": "Choose Obsidian vault root",
-    "zotero-obsidian-linker-markdown-template-prompt": "Markdown filename template:",
-    "zotero-obsidian-linker-config-saved": "Configuration saved.\n\nDirectory: { $directory }\nTemplate: { $template }",
     "zotero-obsidian-linker-choose-note-dir-failed": "Failed to choose Obsidian note directory:\n{ $error }",
     "zotero-obsidian-linker-choose-vault-root-failed": "Failed to choose Obsidian vault root:\n{ $error }",
     "zotero-obsidian-linker-note-dir-required": "Please choose an Obsidian note directory first.",
@@ -95,14 +93,12 @@ const FALLBACK_LOCALE_STRINGS = {
   "zh-CN": {
     "zotero-obsidian-linker-pref-title": "Obsidian Linker",
     "zotero-obsidian-linker-create-note": "为条目新建/更新 Obsidian 笔记",
-    "zotero-obsidian-linker-configure": "Obsidian Linker：配置...",
+    "zotero-obsidian-linker-open-settings": "打开 Obsidian Linker 设置",
     "zotero-obsidian-linker-alert-title": "Zotero Obsidian Linker",
     "zotero-obsidian-linker-no-item-selected": "请选择一个 Zotero 条目，或者这个条目下面的 PDF 附件。",
     "zotero-obsidian-linker-create-failed": "创建 Obsidian 笔记失败：\n{ $error }",
     "zotero-obsidian-linker-choose-note-dir-title": "选择 Obsidian 笔记目录",
     "zotero-obsidian-linker-choose-vault-root-title": "选择 Obsidian vault 根目录",
-    "zotero-obsidian-linker-markdown-template-prompt": "Markdown 文件名模板：",
-    "zotero-obsidian-linker-config-saved": "配置已保存。\n\n目录：{ $directory }\n模板：{ $template }",
     "zotero-obsidian-linker-choose-note-dir-failed": "选择 Obsidian 笔记目录失败：\n{ $error }",
     "zotero-obsidian-linker-choose-vault-root-failed": "选择 Obsidian vault 根目录失败：\n{ $error }",
     "zotero-obsidian-linker-note-dir-required": "请先选择 Obsidian 笔记目录。",
@@ -123,8 +119,10 @@ var ObsidianLinker = {
   _windows: new Set(),
   _preferencePaneID: null,
   _localization: null,
+  _rootURI: "",
 
-  async startup() {
+  async startup(data = {}) {
+    this._rootURI = data.rootURI || "";
     await Promise.all([
       Zotero.initializationPromise,
       Zotero.unlockPromise,
@@ -160,6 +158,11 @@ var ObsidianLinker = {
       this.removeFromWindow(win);
     }
     this._windows.clear();
+    this._rootURI = "";
+  },
+
+  getIconURI(size) {
+    return `${this._rootURI}icons/icon-${size}.png`;
   },
 
   registerMenus() {
@@ -178,6 +181,7 @@ var ObsidianLinker = {
         {
           menuType: "menuitem",
           l10nID: "zotero-obsidian-linker-create-note",
+          icon: this.getIconURI(32),
           onShown: (_event, context) => {
             this.setMenuLabel(context, this.getString("zotero-obsidian-linker-create-note"));
           },
@@ -197,13 +201,14 @@ var ObsidianLinker = {
       menus: [
         {
           menuType: "menuitem",
-          l10nID: "zotero-obsidian-linker-configure",
+          l10nID: "zotero-obsidian-linker-open-settings",
+          icon: this.getIconURI(32),
           enableForTabTypes: ["library"],
           onShown: (_event, context) => {
-            this.setMenuLabel(context, this.getString("zotero-obsidian-linker-configure"));
+            this.setMenuLabel(context, this.getString("zotero-obsidian-linker-open-settings"));
           },
-          onCommand: (event) => {
-            void this.configure(event.target.ownerGlobal);
+          onCommand: () => {
+            this.openSettings();
           }
         }
       ]
@@ -218,6 +223,17 @@ var ObsidianLinker = {
     }
     catch (error) {
       Zotero.logError(error);
+    }
+  },
+
+  openSettings() {
+    const paneID = this._preferencePaneID || "zotero-obsidian-linker-prefpane";
+    try {
+      Zotero.Utilities.Internal.openPreferences(paneID);
+    }
+    catch (error) {
+      Zotero.logError(error);
+      this.log(`failed to open settings: ${error && error.message ? error.message : error}`);
     }
   },
 
@@ -364,8 +380,7 @@ var ObsidianLinker = {
         pluginID: ADDON_ID,
         id: "zotero-obsidian-linker-prefpane",
         src: "content/preferences.xhtml",
-        label: this.getString("zotero-obsidian-linker-pref-title"),
-        image: "chrome://zotero/skin/20/universal/note.svg"
+        label: this.getString("zotero-obsidian-linker-pref-title")
       });
       this.log(`registered preference pane: ${this._preferencePaneID}`);
     }
@@ -645,49 +660,6 @@ var ObsidianLinker = {
     }
 
     return { noteDir, fileNameTemplate, vaultRoot, vaultName };
-  },
-
-  async configure(win) {
-    const currentDir = this.getPref("noteDir", "");
-    const currentTemplate = this.getPref("fileNameTemplate", DEFAULT_FILE_NAME_TEMPLATE) || DEFAULT_FILE_NAME_TEMPLATE;
-    const vaultRoot = this.getPref("vaultRoot", "");
-    const vaultName = this.getPref("vaultName", "");
-
-    const noteDir = await this.pickFolder(win, this.getString("zotero-obsidian-linker-choose-note-dir-title"), currentDir);
-    if (!noteDir) {
-      return null;
-    }
-
-    const templateInput = { value: currentTemplate };
-    const templateOK = Services.prompt.prompt(
-      win,
-      this.getString("zotero-obsidian-linker-alert-title"),
-      this.getString("zotero-obsidian-linker-markdown-template-prompt"),
-      templateInput,
-      null,
-      {}
-    );
-    if (!templateOK || !templateInput.value.trim()) {
-      return null;
-    }
-
-    this.setPref("noteDir", noteDir);
-    this.setPref("fileNameTemplate", templateInput.value.trim());
-
-    this.alert(
-      win,
-      this.getString("zotero-obsidian-linker-config-saved", {
-        directory: noteDir,
-        template: templateInput.value.trim()
-      })
-    );
-
-    return {
-      noteDir,
-      fileNameTemplate: templateInput.value.trim(),
-      vaultRoot,
-      vaultName
-    };
   },
 
   async pickFolder(win, title, initialPath = "") {

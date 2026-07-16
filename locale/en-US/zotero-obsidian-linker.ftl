@@ -2,7 +2,7 @@ zotero-obsidian-linker-pref-title = Obsidian Linker
 zotero-obsidian-linker-alert-title = Zotero Obsidian Linker
 
 zotero-obsidian-linker-create-note = Create/Update Item Obsidian Note
-zotero-obsidian-linker-configure = Obsidian Linker: Configure...
+zotero-obsidian-linker-open-settings = Open Obsidian Linker Settings
 
 zotero-obsidian-linker-settings-title = Settings
 zotero-obsidian-linker-note-dir-label =
@@ -30,10 +30,6 @@ zotero-obsidian-linker-create-failed = Failed to create Obsidian note:
     { $error }
 zotero-obsidian-linker-choose-note-dir-title = Choose Obsidian note directory
 zotero-obsidian-linker-choose-vault-root-title = Choose Obsidian vault root
-zotero-obsidian-linker-markdown-template-prompt = Markdown filename template:
-zotero-obsidian-linker-config-saved = Configuration saved.
-    Directory: { $directory }
-    Template: { $template }
 zotero-obsidian-linker-choose-note-dir-failed = Failed to choose Obsidian note directory:
     { $error }
 zotero-obsidian-linker-choose-vault-root-failed = Failed to choose Obsidian vault root:
